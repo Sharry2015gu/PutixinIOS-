@@ -48,12 +48,6 @@
     PlaceholderTextView *xinyuanText;
     //    NSInteger currentPage;
     BuddhaHallView * emptybuddahaHallView;
-    //用于动画后设置摆放
-    TributeModel * animatingModel;
-    //用于进去之后的佛像名称
-    TempleImage * startModel;
-    
-    
 }
 @property(nonatomic,strong)MakingVowView *makingVowView;
 @property(nonatomic,strong)UIScrollView *buddhaViewScollView;
@@ -114,7 +108,6 @@
 @property(nonatomic,strong)UIImageView * incenseImageView;
 @property(nonatomic,strong)UIImageView * teaImageView;
 @property(nonatomic,strong)UIImageView * offerImageView;
-@property(nonatomic,strong)NSMutableArray *nameArray;
 @end
 
 @implementation MyBuddhaHallViewController
@@ -170,7 +163,7 @@
         
         _offerImageView = [[UIImageView alloc] initWithFrame:CGRectMake(90,SCREEN_HEIGHT*0.1,_animatedImageView.frame.size.width -2*80,SCREEN_HEIGHT*0.18)];
         [_animatedImageView addSubview:_offerImageView];
-
+        
         
     }
     return _animatedImageView;
@@ -440,7 +433,7 @@
         [self loadData];
         [self getWishNum];
         
-       
+        
     }
     return self;
 }
@@ -455,10 +448,9 @@
     self.flagVowStyle = 4 ;
     self.view.backgroundColor = [UIColor whiteColor];
     UIImageView *bgImageView = [[UIImageView alloc] initWithFrame:CGRectMake(0,0,SCREEN_WIDTH,SCREEN_HEIGHT)];
-    bgImageView.image = [UIImage imageNamed:@"buddha_view_bg480.gif"];//480x800.jpg
+    bgImageView.image = [UIImage imageNamed:@""];//480x800.jpg
     bgImageView.userInteractionEnabled = YES;
     [self.view addSubview:bgImageView];
-    self.titleLabel.text=self.nameArray[0];
     
 }
 -(void)viewDidDisappear:(BOOL)animated
@@ -566,19 +558,18 @@
     [appDelegate.sessionManager GET:[NSString stringWithFormat:@"%@%@",__kBaseURLString,TempleList] parameters:mainDic success:^(NSURLSessionDataTask *task, id responseObject){
         
         id jsonDate = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
-          NSLog(@"my佛堂信息＝%@",jsonDate);
+        //        NSLog(@"my佛堂信息＝%@",jsonDate);
         NSArray *dictArray = jsonDate[@"data"];//把里面的字典取出来
-        self.nameArray=[[NSMutableArray alloc]init];
         NSDictionary *dict=[[NSDictionary alloc]init];
-        
         for(int i = 0 ; i < dictArray.count;i++)
         {
             dict = dictArray[i];
             //            NSLog(@"字典=%@",dict);
-            [self.nameArray addObject:dict[@"taskName"]];
+            
             TempleImage *model = [[TempleImage alloc]init];
             [model setValuesForKeysWithDictionary:dict];
             [self.buddaArray addObject:model];
+            
         }
         
     } failure:^(NSURLSessionDataTask *task, id responseObject){
@@ -593,7 +584,7 @@
     NSDictionary * budDic = @{@"params":[NSString stringWithFormat:@"%@",dic]};
     [appdelegate.sessionManager GET:[NSString stringWithFormat:@"%@%@",__kBaseURLString,GetMaterailByIDURL] parameters:budDic success:^(NSURLSessionDataTask *task, id responseObject) {
         id jsonData = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
-        NSLog(@"佛像＝%@",jsonData);
+        //NSLog(@"佛像＝%@",jsonData);
         self.myBuddha.textview.text=jsonData[@"taskDesc"];
         
     } failure:^(NSURLSessionDataTask *task, NSError *error) {
@@ -609,13 +600,12 @@
 -(void)createBar
 {
     [self getTribute];
-    startModel = _teModel;
+    
     _navBar=[[UINavigationBar alloc]initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH,NAVBARHEIGHT)];
     [_navBar setBackgroundImage:[UIImage imageNamed:@"meditation_top_bg.png"] forBarMetrics:UIBarMetricsDefault];
     _navBar.barStyle = UIBarStyleBlackTranslucent;
     
-    _titleItem = [[UINavigationItem alloc]initWithTitle:@""];
-    NSLog(@"_titleItem=%@",_titleItem.title);
+    _titleItem = [[UINavigationItem alloc]initWithTitle:self.teModel.taskName];
     NSDictionary *navTitleArr = [NSDictionary dictionaryWithObjectsAndKeys:
                                  
                                  [UIFont boldSystemFontOfSize:20],UITextAttributeFont,
@@ -629,14 +619,16 @@
     [_titleItem setLeftBarButtonItem:leftItem];
     [_navBar pushNavigationItem:_titleItem animated:NO];
     [self.view addSubview:_navBar];
-//    
-//    self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(SCREEN_WIDTH/2-50, 25,SCREEN_WIDTH*0.3 , _navBar.frame.size.height*0.6)];
-//    self.titleLabel.font=[UIFont systemFontOfSize:20];
-//    self.titleLabel.textColor=[UIColor whiteColor];
-//    self.titleLabel.backgroundColor=[UIColor clearColor];
-////    self.titleLabel.text=startModel.taskName;
-//    NSLog(@"self.titleLabel.text=%@",self.titleLabel.text);
-//    [_navBar addSubview:self.titleLabel];
+    
+    //    self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(SCREEN_WIDTH/2-50, 0,SCREEN_WIDTH*0.3 , _navBar.frame.size.height)];
+    //    self.titleLabel.font=[UIFont systemFontOfSize:20];
+    //    self.titleLabel.textColor=[UIColor redColor];
+    //    self.titleLabel.backgroundColor=[UIColor blueColor];
+    //    self.titleLabel.text=_teModel.taskName;
+    ////    [self.view addSubview:self.titleLabel];
+    //    NSLog(@"self.titleLabel.text=%@",self.titleLabel.text);
+    //    [_navBar addSubview:self.titleLabel];
+    
     
 }
 -(void)backclick{
@@ -718,18 +710,18 @@
                     [weakSelf.backgroundImage removeFromSuperview];
                 };
                 
-
+                
                 tintView.submitBlock = ^void(TributeModel *model)
                 {
                     if (weakSelf.flagVowStyle == 0) {
                         NSLog(@"^^^^^^");
-
+                        
                         //                        [weakSelf getTempleVowWithBuddhistId:weakSelf.vowModel];
                     }
                     else
                     {
                         [weakSelf PtxAddUserTaskRecord:model];
-                       
+                        
                     }
                     [weakSelf.maskView removeFromSuperview];
                     [weakTintView removeFromSuperview];
@@ -1210,7 +1202,7 @@
 -(void)vowClick{
     
     TempleImage  *model = self.MyBuddhaArray[_currentPage];
-  
+    
     if (model.taskName == nil) {
         
         UILabel *label = [[UILabel alloc]init];
@@ -1497,200 +1489,468 @@
     NSDictionary * numDic=@{@"params":[NSString stringWithFormat:@"%@",numdic]};
     [appdelegta.sessionManager GET:[NSString stringWithFormat:@"%@%@",__kBaseURLString,WishNumURL] parameters:numDic success:^(NSURLSessionDataTask *task, id responseObject){
         id jsonData = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
-                NSLog(@"许愿的次数=%@",jsonData);
+        NSLog(@"许愿的次数=%@",jsonData);
     } failure:^(NSURLSessionDataTask *task, id responseObject){
     }];
 }
 #pragma mark  -UIScrollView代理方法
 -(void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
+    
     int page =  scrollView.contentOffset.x / scrollView.frame.size.width;
     _currentPage =  page;
     TempleImage *model = self.MyBuddhaArray[_currentPage];
     self.titleLabel.text = model.taskName;
-   
+    
 }
 #pragma mark -进贡时调用的接口
 -(void)PtxAddUserTaskRecord:(TributeModel *) model
 {
-    animatingModel= model;
+    //判断升级
+    AppDelegate * appdelegta=(AppDelegate *)[UIApplication sharedApplication].delegate;
+    NSInteger oldLevel =[[appdelegta.accountBasicDict objectForKey:@"personLevel"]integerValue];
+    
     //动态效果
+    BuddhaHallView * view = self.buddhaViewArray[_currentPage];
     if (model.taskType == 1) {
         //敬香
         //可以添加动态效果
-         _buddhaViewScollView.scrollEnabled = NO;
+        
         [self.view addSubview:self.incenseImageView];
+        _buddhaViewScollView.scrollEnabled = YES;
         _incenseImageView.animationImages = self.incensearray;
         _incenseImageView.animationDuration = self.incensearray.count * 0.2;
         [self.incenseImageView startAnimating];
         [self performSelector:@selector(stopAnimateImageView) withObject:nil afterDelay:self.incenseImageView.animationDuration];
+        [view.burnerImageView setImageWithURL:[NSURL URLWithString:model.materialImageUrl]];
+        _buddhaViewScollView.scrollEnabled=NO;
+        //调用接口
+        TempleImage  *buddhistTemple = self.MyBuddhaArray[_currentPage];
+        //取出佛堂ID
+        NSNumber *buddhistTempleID = [NSNumber numberWithInteger:buddhistTemple.buddhistTempleID];
+        
+        NSNumber *loginId = [self.userDict objectForKey:@"userLoginID"];
+        NSNumber * huaien = [self.userDict objectForKey:@"huaienID"];
+        
+        NSArray  *paramsKeyArray = @[@"secretKey",@"userLoginID",@"huaienID",@"taskCode",@"sceneType",@"buddhistTempleID",@"bookID",@"userTaskID",@"beginPostion",@"endPostion"];
+        //该在这里
+        //NSString *str=@"00";
+        NSString *newStr =[NSString stringWithFormat:@"%03ld",model.taskCode];
+        //NSString *taskCode=[str stringByAppendingString:newStr];
+        
+        NSDictionary * wishdic=@{@"secretKey":[self.userDict objectForKey:@"secretKey"],@"userLoginID":loginId,@"huaienID":huaien,@"taskCode":newStr ,@"sceneType":@1,@"buddhistTempleID":buddhistTempleID,@"bookID":@0,@"userTaskID":@0,@"beginPostion":@0,@"endPostion":@0};
+        NSString *jsonParamsStr = @"{";
+        for(int i = 0 ; i < paramsKeyArray.count; i++)
+        {
+            NSString *keyValue = paramsKeyArray[i];
+            if (i == paramsKeyArray.count- 1) {
+                jsonParamsStr = [NSString stringWithFormat:@"%@%@:%@}",jsonParamsStr,keyValue,[wishdic valueForKey:keyValue]];
+            }
+            else
+            {
+                jsonParamsStr = [NSString stringWithFormat:@"%@%@:%@,",jsonParamsStr,keyValue,[wishdic valueForKey:keyValue]];
+            }
+        }
+        NSString *urlStr = [NSString stringWithFormat:@"%@%@params=%@",__kBaseURLString,ptxAddUserTaskRecord,jsonParamsStr];
+        NSLog(@"进香url=%@",urlStr);
+        [appdelegta.sessionManager GET:[urlStr stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding] parameters:nil success:^(NSURLSessionDataTask *task, id responseObject){
+            id jsonData = [NSJSONSerialization JSONObjectWithData:responseObject options:
+                           NSJSONReadingMutableContainers error:nil];
+            NSLog(@"进香＝%@",jsonData);
+            NSNumber  *result  = jsonData[@"result"];
+            if ([result integerValue] > 0) {
+                
+#pragma mark ---添加消耗纪念币的标签
+                UIView *view=[[UIView alloc]initWithFrame:CGRectMake(SCREEN_WIDTH*0.35, SCREEN_HEIGHT*0.6, SCREEN_WIDTH*0.35, SCREEN_HEIGHT*0.08)];
+                view.backgroundColor=[UIColor blackColor];
+                //        view.alpha=0.5;
+                UILabel *label1=[[UILabel alloc]initWithFrame:CGRectMake(10, -2, view.frame.size.width*0.7, view.frame.size.height)];
+                label1.text=@"修行值";
+                label1.font=[UIFont systemFontOfSize:20.0f];
+                label1.textColor=[UIColor whiteColor];
+                UILabel *label2=[[UILabel alloc]initWithFrame:CGRectMake(2+label1.frame.size.width, label1.frame.origin.y, label1.frame.size.width*0.3, view.frame.size.height)];
+                label2.text=@"+4";
+                label2.textColor=[UIColor redColor];
+                label2.font=[UIFont systemFontOfSize:20.0f];
+                [view addSubview:label1];
+                [view addSubview:label2];
+                
+                [UIView animateWithDuration:2 animations:^{
+                    view.alpha = 0;
+                    [self.view addSubview:view];
+                    
+                } completion:^(BOOL finished) {
+                    
+                    [view removeFromSuperview];
+                }];
+            }
+            else
+            {
+                UILabel *label = [[UILabel alloc]init];
+                label.frame = CGRectMake((SCREEN_WIDTH - 200) / 2, SCREEN_HEIGHT*0.68, 200, 50);
+                label.text =  jsonData[@"desc"];
+                
+                label.textColor = [UIColor whiteColor];
+                label.textAlignment = 1;
+                label.backgroundColor = [UIColor blackColor];
+                label.font = [UIFont boldSystemFontOfSize:12];
+                [self.view addSubview:label];
+                
+                [UIView animateWithDuration:1.5 animations:^{
+                    label.alpha = 0;
+                } completion:^(BOOL finished) {
+                    [label removeFromSuperview];
+                }];
+            }
+#pragma mark 调用1115接口获取等级
+            NSNumber * huaien = [appdelegta.accountBasicDict objectForKey:@"huaienID"];
+            NSNumber *secretKey =[appdelegta.accountBasicDict objectForKey:@"secretKey"];
+            NSDictionary *oldLevelDict=@{@"huaienID":huaien,@"secretKey":secretKey};
+            NSDictionary *oldLevelDict1=@{@"params":[NSString stringWithFormat:@"%@",oldLevelDict]};
+            appdelegta.sessionManager.responseSerializer = [AFHTTPResponseSerializer serializer];
+            [appdelegta.sessionManager GET:[NSString stringWithFormat:@"%@%@",__kBaseURLString,ptxGetUserLevel] parameters:oldLevelDict1 success:^(NSURLSessionDataTask *task, id responseObject) {
+                id jsonData=[NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
+                NSLog(@"进香修行值－－%@",jsonData);
+                //NSNumber *jxTotalIntegral=jsonData[@"totalIntegral"];
+                
+            } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                
+            }];
+            
+        } failure:^(NSURLSessionDataTask *task, id responseObject){
+        }];
+        
+        
+        
     }
     if (model.taskType == 2) {
         //敬茶
-         _buddhaViewScollView.scrollEnabled = NO;
+        
         [self.view addSubview:self.teaImageView];
+        _buddhaViewScollView.scrollEnabled = YES;
         _teaImageView.animationImages = self.teaarray;
         _teaImageView.animationDuration = self.teaarray.count * 0.2;
         [self.teaImageView startAnimating];
         [self performSelector:@selector(stopAnimateImageView) withObject:nil afterDelay:self.teaImageView.animationDuration];
+        //        [view.teacupImageView1 setImage:[UIImage imageNamed:@"cup_has_tea"]];
+        _buddhaViewScollView.scrollEnabled=NO;
+        //调用接口
+        TempleImage  *buddhistTemple = self.MyBuddhaArray[_currentPage];
+        //取出佛堂ID
+        NSNumber *buddhistTempleID = [NSNumber numberWithInteger:buddhistTemple.buddhistTempleID];
+        
+        NSNumber *loginId = [self.userDict objectForKey:@"userLoginID"];
+        NSNumber * huaien = [self.userDict objectForKey:@"huaienID"];
+        
+        NSArray  *paramsKeyArray = @[@"secretKey",@"userLoginID",@"huaienID",@"taskCode",@"sceneType",@"buddhistTempleID",@"bookID",@"userTaskID",@"beginPostion",@"endPostion"];
+        //该在这里
+        NSDictionary * wishdic=@{@"secretKey":[self.userDict objectForKey:@"secretKey"],@"userLoginID":loginId,@"huaienID":huaien,@"taskCode":[NSNumber numberWithInteger:model.taskCode],@"sceneType":@1,@"buddhistTempleID":buddhistTempleID,@"bookID":@0,@"userTaskID":@0,@"beginPostion":@0,@"endPostion":@0};
+        NSString *jsonParamsStr = @"{";
+        for(int i = 0 ; i < paramsKeyArray.count; i++)
+        {
+            NSString *keyValue = paramsKeyArray[i];
+            if (i == paramsKeyArray.count- 1) {
+                jsonParamsStr = [NSString stringWithFormat:@"%@%@:%@}",jsonParamsStr,keyValue,[wishdic valueForKey:keyValue]];
+            }
+            else
+            {
+                jsonParamsStr = [NSString stringWithFormat:@"%@%@:%@,",jsonParamsStr,keyValue,[wishdic valueForKey:keyValue]];
+            }
+        }
+        NSString *urlStr = [NSString stringWithFormat:@"%@%@params=%@",__kBaseURLString,ptxAddUserTaskRecord,jsonParamsStr];
+        
+        
+        [appdelegta.sessionManager GET:[urlStr stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding] parameters:nil success:^(NSURLSessionDataTask *task, id responseObject){
+            id jsonData = [NSJSONSerialization JSONObjectWithData:responseObject options:
+                           NSJSONReadingMutableContainers error:nil];
+            NSLog(@"敬茶＝%@",jsonData);
+            NSNumber  *result  = jsonData[@"result"];
+            if ([result integerValue] > 0) {
+                
+#pragma mark ---添加消耗纪念币的标签
+                UIView *view=[[UIView alloc]initWithFrame:CGRectMake(SCREEN_WIDTH*0.35, SCREEN_HEIGHT*0.6, SCREEN_WIDTH*0.35, SCREEN_HEIGHT*0.08)];
+                view.backgroundColor=[UIColor blackColor];
+                //        view.alpha=0.5;
+                UILabel *label1=[[UILabel alloc]initWithFrame:CGRectMake(10, -2, view.frame.size.width*0.7, view.frame.size.height)];
+                label1.text=@"修行值";
+                label1.font=[UIFont systemFontOfSize:20.0f];
+                label1.textColor=[UIColor whiteColor];
+                UILabel *label2=[[UILabel alloc]initWithFrame:CGRectMake(2+label1.frame.size.width, label1.frame.origin.y, label1.frame.size.width*0.3, view.frame.size.height)];
+                label2.text=@"+4";
+                label2.textColor=[UIColor redColor];
+                label2.font=[UIFont systemFontOfSize:20.0f];
+                [view addSubview:label1];
+                [view addSubview:label2];
+                
+                [UIView animateWithDuration:2 animations:^{
+                    view.alpha = 0;
+                    [self.view addSubview:view];
+                    
+                } completion:^(BOOL finished) {
+                    
+                    [view removeFromSuperview];
+                }];
+            }
+            else
+            {
+                UILabel *label = [[UILabel alloc]init];
+                label.frame = CGRectMake((SCREEN_WIDTH - 200) / 2, SCREEN_HEIGHT*0.68, 200, 50);
+                label.text =  jsonData[@"desc"];
+                
+                label.textColor = [UIColor whiteColor];
+                label.textAlignment = 1;
+                label.backgroundColor = [UIColor blackColor];
+                label.font = [UIFont boldSystemFontOfSize:12];
+                [self.view addSubview:label];
+                
+                [UIView animateWithDuration:1.5 animations:^{
+                    label.alpha = 0;
+                } completion:^(BOOL finished) {
+                    [label removeFromSuperview];
+                }];
+            }
+#pragma mark 调用1115接口获取等级
+            NSNumber * huaien = [appdelegta.accountBasicDict objectForKey:@"huaienID"];
+            NSNumber *secretKey =[appdelegta.accountBasicDict objectForKey:@"secretKey"];
+            NSDictionary *oldLevelDict=@{@"huaienID":huaien,@"secretKey":secretKey};
+            NSDictionary *oldLevelDict1=@{@"params":[NSString stringWithFormat:@"%@",oldLevelDict]};
+            appdelegta.sessionManager.responseSerializer = [AFHTTPResponseSerializer serializer];
+            [appdelegta.sessionManager GET:[NSString stringWithFormat:@"%@%@",__kBaseURLString,ptxGetUserLevel] parameters:oldLevelDict1 success:^(NSURLSessionDataTask *task, id responseObject) {
+                id jsonData=[NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
+                NSLog(@"敬茶修行值－－%@",jsonData);
+                //NSNumber *jxTotalIntegral=jsonData[@"totalIntegral"];
+                
+            } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                
+            }];
+            
+        } failure:^(NSURLSessionDataTask *task, id responseObject){
+        }];
+        
+        
     }
     if (model.taskType == 3) {
         //献贡
-         _buddhaViewScollView.scrollEnabled = NO;
         [self.view addSubview:self.animatedImageView];
+        _buddhaViewScollView.scrollEnabled=YES;
         _animatedImageView.animationImages = self.flowerArray;
         _animatedImageView.animationDuration = self.flowerArray.count * 0.2;
         [self.animatedImageView startAnimating];
         [_offerImageView setImageWithURL:[NSURL URLWithString:model.materialImageUrl]];
         [self performSelector:@selector(stopAnimateImageView) withObject:nil afterDelay:self.animatedImageView.animationDuration];
+        [view.fruitBowlImageView1 setImageWithURL:[NSURL URLWithString:model.materialImageUrl]];
+        [view.fruitBowlImageView2 setImageWithURL:[NSURL URLWithString:model.materialImageUrl]];
+        _buddhaViewScollView.scrollEnabled=NO;
+        //调用接口
+        TempleImage  *buddhistTemple = self.MyBuddhaArray[_currentPage];
+        //取出佛堂ID
+        NSNumber *buddhistTempleID = [NSNumber numberWithInteger:buddhistTemple.buddhistTempleID];
+        
+        NSNumber *loginId = [self.userDict objectForKey:@"userLoginID"];
+        NSNumber * huaien = [self.userDict objectForKey:@"huaienID"];
+        
+        NSArray  *paramsKeyArray = @[@"secretKey",@"userLoginID",@"huaienID",@"taskCode",@"sceneType",@"buddhistTempleID",@"bookID",@"userTaskID",@"beginPostion",@"endPostion"];
+        //该在这里
+        NSDictionary * wishdic=@{@"secretKey":[self.userDict objectForKey:@"secretKey"],@"userLoginID":loginId,@"huaienID":huaien,@"taskCode":[NSNumber numberWithInteger:model.taskCode],@"sceneType":@1,@"buddhistTempleID":buddhistTempleID,@"bookID":@0,@"userTaskID":@0,@"beginPostion":@0,@"endPostion":@0};
+        NSString *jsonParamsStr = @"{";
+        for(int i = 0 ; i < paramsKeyArray.count; i++)
+        {
+            NSString *keyValue = paramsKeyArray[i];
+            if (i == paramsKeyArray.count- 1) {
+                jsonParamsStr = [NSString stringWithFormat:@"%@%@:%@}",jsonParamsStr,keyValue,[wishdic valueForKey:keyValue]];
+            }
+            else
+            {
+                jsonParamsStr = [NSString stringWithFormat:@"%@%@:%@,",jsonParamsStr,keyValue,[wishdic valueForKey:keyValue]];
+            }
+        }
+        NSString *urlStr = [NSString stringWithFormat:@"%@%@params=%@",__kBaseURLString,ptxAddUserTaskRecord,jsonParamsStr];
+        
+        
+        [appdelegta.sessionManager GET:[urlStr stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding] parameters:nil success:^(NSURLSessionDataTask *task, id responseObject){
+            id jsonData = [NSJSONSerialization JSONObjectWithData:responseObject options:
+                           NSJSONReadingMutableContainers error:nil];
+            NSLog(@"献贡＝%@",jsonData);
+            NSNumber  *result  = jsonData[@"result"];
+            if ([result integerValue] > 0) {
+                
+#pragma mark ---添加消耗纪念币的标签
+                UIView *view=[[UIView alloc]initWithFrame:CGRectMake(SCREEN_WIDTH*0.35, SCREEN_HEIGHT*0.6, SCREEN_WIDTH*0.35, SCREEN_HEIGHT*0.08)];
+                view.backgroundColor=[UIColor blackColor];
+                //        view.alpha=0.5;
+                UILabel *label1=[[UILabel alloc]initWithFrame:CGRectMake(10, -2, view.frame.size.width*0.7, view.frame.size.height)];
+                label1.text=@"修行值";
+                label1.font=[UIFont systemFontOfSize:20.0f];
+                label1.textColor=[UIColor whiteColor];
+                UILabel *label2=[[UILabel alloc]initWithFrame:CGRectMake(2+label1.frame.size.width, label1.frame.origin.y, label1.frame.size.width*0.3, view.frame.size.height)];
+                label2.text=@"+4";
+                label2.textColor=[UIColor redColor];
+                label2.font=[UIFont systemFontOfSize:20.0f];
+                [view addSubview:label1];
+                [view addSubview:label2];
+                
+                [UIView animateWithDuration:2 animations:^{
+                    view.alpha = 0;
+                    [self.view addSubview:view];
+                    
+                } completion:^(BOOL finished) {
+                    
+                    [view removeFromSuperview];
+                }];
+            }
+            else
+            {
+                UILabel *label = [[UILabel alloc]init];
+                label.frame = CGRectMake((SCREEN_WIDTH - 200) / 2, SCREEN_HEIGHT*0.68, 200, 50);
+                label.text =  jsonData[@"desc"];
+                
+                label.textColor = [UIColor whiteColor];
+                label.textAlignment = 1;
+                label.backgroundColor = [UIColor blackColor];
+                label.font = [UIFont boldSystemFontOfSize:12];
+                [self.view addSubview:label];
+                
+                [UIView animateWithDuration:1.5 animations:^{
+                    label.alpha = 0;
+                } completion:^(BOOL finished) {
+                    [label removeFromSuperview];
+                }];
+            }
+#pragma mark 调用1115接口获取等级
+            NSNumber * huaien = [appdelegta.accountBasicDict objectForKey:@"huaienID"];
+            NSNumber *secretKey =[appdelegta.accountBasicDict objectForKey:@"secretKey"];
+            NSDictionary *oldLevelDict=@{@"huaienID":huaien,@"secretKey":secretKey};
+            NSDictionary *oldLevelDict1=@{@"params":[NSString stringWithFormat:@"%@",oldLevelDict]};
+            appdelegta.sessionManager.responseSerializer = [AFHTTPResponseSerializer serializer];
+            [appdelegta.sessionManager GET:[NSString stringWithFormat:@"%@%@",__kBaseURLString,ptxGetUserLevel] parameters:oldLevelDict1 success:^(NSURLSessionDataTask *task, id responseObject) {
+                id jsonData=[NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
+                NSLog(@"献贡修行值－－%@",jsonData);
+                //NSNumber *jxTotalIntegral=jsonData[@"totalIntegral"];
+                
+            } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                
+            }];
+            
+        } failure:^(NSURLSessionDataTask *task, id responseObject){
+        }];
+        
+        
     }
     if (model.taskType == 4) {
         //供花
-         _buddhaViewScollView.scrollEnabled = NO;
         [self.view addSubview:self.animatedImageView];
+        _buddhaViewScollView.scrollEnabled=YES;
         _animatedImageView.animationImages = self.flowerArray;
+        
         _animatedImageView.animationDuration = self.flowerArray.count * 0.2;
         [self.animatedImageView startAnimating];
         [_goodsImageView setImageWithURL:[NSURL URLWithString:model.materialImageUrl]];
         [self performSelector:@selector(stopAnimateImageView) withObject:nil afterDelay:self.animatedImageView.animationDuration];
-    }
-    //调用接口
-    TempleImage  *buddhistTemple = self.MyBuddhaArray[_currentPage];
-    //取出佛堂ID
-    NSNumber *buddhistTempleID = [NSNumber numberWithInteger:buddhistTemple.buddhistTempleID];
-    
-    NSNumber *loginId = [self.userDict objectForKey:@"userLoginID"];
-    NSNumber * huaien = [self.userDict objectForKey:@"huaienID"];
-    
-    NSArray  *paramsKeyArray = @[@"secretKey",@"userLoginID",@"huaienID",@"taskCode",@"sceneType",@"buddhistTempleID",@"bookID",@"userTaskID",@"beginPostion",@"endPostion"];
-    //该在这里
-    NSDictionary * wishdic=@{@"secretKey":[self.userDict objectForKey:@"secretKey"],@"userLoginID":loginId,@"huaienID":huaien,@"taskCode":[NSNumber numberWithInteger:model.taskCode+299],@"sceneType":@1,@"buddhistTempleID":buddhistTempleID,@"bookID":@0,@"userTaskID":@0,@"beginPostion":@0,@"endPostion":@0};
-    NSString *jsonParamsStr = @"{";
-    for(int i = 0 ; i < paramsKeyArray.count; i++)
-    {
-        NSString *keyValue = paramsKeyArray[i];
-        if (i == paramsKeyArray.count- 1) {
-            jsonParamsStr = [NSString stringWithFormat:@"%@%@:%@}",jsonParamsStr,keyValue,[wishdic valueForKey:keyValue]];
-        }
-        else
-        {
-            jsonParamsStr = [NSString stringWithFormat:@"%@%@:%@,",jsonParamsStr,keyValue,[wishdic valueForKey:keyValue]];
-        }
-    }
-    NSString *urlStr = [NSString stringWithFormat:@"%@%@params=%@",__kBaseURLString,ptxAddUserTaskRecord,jsonParamsStr];
-    
-    AppDelegate * appdelegta=(AppDelegate *)[UIApplication sharedApplication].delegate;
-    [appdelegta.sessionManager GET:[urlStr stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding] parameters:nil success:^(NSURLSessionDataTask *task, id responseObject){
-        id jsonData = [NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
-                NSLog(@"进贡＝%@",jsonData);
-        NSNumber  *result  = jsonData[@"result"];
-        if ([result integerValue] > 0) {
-#pragma mark ---添加消耗纪念币的标签
-            UIView *view=[[UIView alloc]initWithFrame:CGRectMake(SCREEN_WIDTH*0.35, SCREEN_HEIGHT*0.6, SCREEN_WIDTH*0.35, SCREEN_HEIGHT*0.08)];
-            view.backgroundColor=[UIColor blackColor];
-                //        view.alpha=0.5;
-            UILabel *label1=[[UILabel alloc]initWithFrame:CGRectMake(10, -2, view.frame.size.width*0.7, view.frame.size.height)];
-            label1.text=@"修行值";
-            label1.font=[UIFont systemFontOfSize:20.0f];
-            label1.textColor=[UIColor whiteColor];
-            UILabel *label2=[[UILabel alloc]initWithFrame:CGRectMake(2+label1.frame.size.width, label1.frame.origin.y, label1.frame.size.width*0.3, view.frame.size.height)];
-            label2.text=@"+4";
-            label2.textColor=[UIColor redColor];
-            label2.font=[UIFont systemFontOfSize:20.0f];
-            [view addSubview:label1];
-            [view addSubview:label2];
-                
-            [UIView animateWithDuration:2 animations:^{
-                view.alpha = 0;
-                [self.view addSubview:view];
-                    
-            } completion:^(BOOL finished) {
-                    
-                [view removeFromSuperview];
-        }];
-        }
-        else
-        {
-            UILabel *label = [[UILabel alloc]init];
-            label.frame = CGRectMake((SCREEN_WIDTH - 200) / 2, SCREEN_HEIGHT*0.68, 200, 50);
-            label.text =  jsonData[@"desc"];
-            
-            label.textColor = [UIColor whiteColor];
-            label.textAlignment = 1;
-            label.backgroundColor = [UIColor blackColor];
-            label.font = [UIFont boldSystemFontOfSize:12];
-            [self.view addSubview:label];
-            
-            [UIView animateWithDuration:1.5 animations:^{
-                label.alpha = 0;
-            } completion:^(BOOL finished) {
-                [label removeFromSuperview];
-            }];
-        }
+        [view.vaseImageView1 setImageWithURL:[NSURL URLWithString:model.materialImageUrl]];
+        [view.vaseImageView2 setImageWithURL:[NSURL URLWithString:model.materialImageUrl]];
+        _buddhaViewScollView.scrollEnabled=NO;
+        //调用接口
+        TempleImage  *buddhistTemple = self.MyBuddhaArray[_currentPage];
+        //取出佛堂ID
+        NSNumber *buddhistTempleID = [NSNumber numberWithInteger:buddhistTemple.buddhistTempleID];
         
-        BuddhaHallView * buddView= [[BuddhaHallView alloc]init];
-        NSString * str = [appdelegta.accountBasicDict objectForKey:@"levelAndDesignation"];
-//        NSArray *array = [str componentsSeparatedByString:@"|"];
-        NSMutableArray * arr = [NSMutableArray arrayWithArray:[str componentsSeparatedByString:@"|"]];
-        for (int i = 0; i < [arr count]; i++) {
-            NSLog(@"string:%@", [arr objectAtIndex:i]);
-            
-            buddView.gradLabel.text=arr[i+1];
-            
-//            UIView *view=[[UIView alloc]initWithFrame:CGRectMake(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT)];
-//            view.backgroundColor=[[UIColor alloc]initWithPatternImage:[UIImage imageNamed:@"bground"]];
-//            //        view.alpha=0.5;
-//            UILabel *label1=[[UILabel alloc]initWithFrame:CGRectMake(10, -2, view.frame.size.width*0.7, view.frame.size.height)];
-//            label1.text=@"修行值";
-//            label1.font=[UIFont systemFontOfSize:20.0f];
-//            label1.textColor=[UIColor whiteColor];
-//            UIImageView *label2=[[UIImageView alloc]initWithFrame:CGRectMake(2+label1.frame.size.width, label1.frame.origin.y+label1.frame.size.height+10, label1.frame.size.width*0.8, view.frame.size.height)];
-//            label2.image=[UIImage imageNamed:@"level_update_success_toast"];
-////            label2.textColor=[UIColor redColor];
-////            label2.font=[UIFont systemFontOfSize:20.0f];
-//            [view addSubview:label1];
-//            [view addSubview:label2];
-//            
-//            [UIView animateWithDuration:2 animations:^{
-//                view.alpha = 0;
-//                [self.view addSubview:view];
-//                
-//            } completion:^(BOOL finished) {
-//                
-//                [view removeFromSuperview];
-//            }];
-//            [lvt setTitle:[NSString stringWithFormat:@"LV%@",array[0]] forState:UIControlStateNormal];
-            
+        NSNumber *loginId = [self.userDict objectForKey:@"userLoginID"];
+        NSNumber * huaien = [self.userDict objectForKey:@"huaienID"];
+        
+        NSArray  *paramsKeyArray = @[@"secretKey",@"userLoginID",@"huaienID",@"taskCode",@"sceneType",@"buddhistTempleID",@"bookID",@"userTaskID",@"beginPostion",@"endPostion"];
+        //该在这里
+        NSDictionary * wishdic=@{@"secretKey":[self.userDict objectForKey:@"secretKey"],@"userLoginID":loginId,@"huaienID":huaien,@"taskCode":[NSNumber numberWithInteger:model.taskCode],@"sceneType":@1,@"buddhistTempleID":buddhistTempleID,@"bookID":@0,@"userTaskID":@0,@"beginPostion":@0,@"endPostion":@0};
+        NSString *jsonParamsStr = @"{";
+        for(int i = 0 ; i < paramsKeyArray.count; i++)
+        {
+            NSString *keyValue = paramsKeyArray[i];
+            if (i == paramsKeyArray.count- 1) {
+                jsonParamsStr = [NSString stringWithFormat:@"%@%@:%@}",jsonParamsStr,keyValue,[wishdic valueForKey:keyValue]];
+            }
+            else
+            {
+                jsonParamsStr = [NSString stringWithFormat:@"%@%@:%@,",jsonParamsStr,keyValue,[wishdic valueForKey:keyValue]];
+            }
         }
-
-    } failure:^(NSURLSessionDataTask *task, id responseObject){
-    }];
+        NSString *urlStr = [NSString stringWithFormat:@"%@%@params=%@",__kBaseURLString,ptxAddUserTaskRecord,jsonParamsStr];
+        
+        NSLog(@"1108=%@",urlStr);
+        [appdelegta.sessionManager GET:[urlStr stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding] parameters:nil success:^(NSURLSessionDataTask *task, id responseObject){
+            id jsonData = [NSJSONSerialization JSONObjectWithData:responseObject options:
+                           NSJSONReadingMutableContainers error:nil];
+            NSLog(@"供花＝%@",jsonData);
+            NSNumber  *result  = jsonData[@"result"];
+            if ([result integerValue] > 0) {
+                
+#pragma mark ---添加消耗纪念币的标签
+                UIView *view=[[UIView alloc]initWithFrame:CGRectMake(SCREEN_WIDTH*0.35, SCREEN_HEIGHT*0.6, SCREEN_WIDTH*0.35, SCREEN_HEIGHT*0.08)];
+                view.backgroundColor=[UIColor blackColor];
+                //        view.alpha=0.5;
+                UILabel *label1=[[UILabel alloc]initWithFrame:CGRectMake(10, -2, view.frame.size.width*0.7, view.frame.size.height)];
+                label1.text=@"修行值";
+                label1.font=[UIFont systemFontOfSize:20.0f];
+                label1.textColor=[UIColor whiteColor];
+                UILabel *label2=[[UILabel alloc]initWithFrame:CGRectMake(2+label1.frame.size.width, label1.frame.origin.y, label1.frame.size.width*0.3, view.frame.size.height)];
+                label2.text=@"+4";
+                label2.textColor=[UIColor redColor];
+                label2.font=[UIFont systemFontOfSize:20.0f];
+                [view addSubview:label1];
+                [view addSubview:label2];
+                
+                [UIView animateWithDuration:2 animations:^{
+                    view.alpha = 0;
+                    [self.view addSubview:view];
+                    
+                } completion:^(BOOL finished) {
+                    
+                    [view removeFromSuperview];
+                }];
+            }
+            else
+            {
+                UILabel *label = [[UILabel alloc]init];
+                label.frame = CGRectMake((SCREEN_WIDTH - 200) / 2, SCREEN_HEIGHT*0.68, 200, 50);
+                label.text =  jsonData[@"desc"];
+                
+                label.textColor = [UIColor whiteColor];
+                label.textAlignment = 1;
+                label.backgroundColor = [UIColor blackColor];
+                label.font = [UIFont boldSystemFontOfSize:12];
+                [self.view addSubview:label];
+                
+                [UIView animateWithDuration:1.5 animations:^{
+                    label.alpha = 0;
+                } completion:^(BOOL finished) {
+                    [label removeFromSuperview];
+                }];
+            }
+#pragma mark 调用1115接口获取等级
+            NSNumber * huaien = [appdelegta.accountBasicDict objectForKey:@"huaienID"];
+            NSNumber *secretKey =[appdelegta.accountBasicDict objectForKey:@"secretKey"];
+            NSDictionary *oldLevelDict=@{@"huaienID":huaien,@"secretKey":secretKey};
+            NSDictionary *oldLevelDict1=@{@"params":[NSString stringWithFormat:@"%@",oldLevelDict]};
+            appdelegta.sessionManager.responseSerializer = [AFHTTPResponseSerializer serializer];
+            [appdelegta.sessionManager GET:[NSString stringWithFormat:@"%@%@",__kBaseURLString,ptxGetUserLevel] parameters:oldLevelDict1 success:^(NSURLSessionDataTask *task, id responseObject) {
+                id jsonData=[NSJSONSerialization JSONObjectWithData:responseObject options:NSJSONReadingMutableContainers error:nil];
+                NSLog(@"供花修行值－－%@",jsonData);
+                //NSNumber *jxTotalIntegral=jsonData[@"totalIntegral"];
+                
+            } failure:^(NSURLSessionDataTask *task, NSError *error) {
+                
+            }];
+            
+        } failure:^(NSURLSessionDataTask *task, id responseObject){
+        }];
+        
+        
+    }
 }
 -(void)stopAnimateImageView
 {
-    BuddhaHallView * view = self.buddhaViewArray[_currentPage];
     [self.maskView removeFromSuperview];
     [self.animatedImageView removeFromSuperview];
-    if(animatingModel.taskType==1){
-       
-        [view.burnerImageView setImageWithURL:[NSURL URLWithString:animatingModel.materialImageUrl]];
-         _buddhaViewScollView.scrollEnabled=YES;
-    }
-    if (animatingModel.taskType == 2) {
-        [view.teacupImageView1 setImage:[UIImage imageNamed:@"cup_has_tea"]];
-         _buddhaViewScollView.scrollEnabled=YES;
-    }
-    if (animatingModel.taskType == 3) {
-        [view.fruitBowlImageView1 setImageWithURL:[NSURL URLWithString:animatingModel.materialImageUrl]];
-        [view.fruitBowlImageView2 setImageWithURL:[NSURL URLWithString:animatingModel.materialImageUrl]];
-        _buddhaViewScollView.scrollEnabled=YES;
-    }
-    if (animatingModel.taskType == 4) {
-        
-        [view.vaseImageView1 setImageWithURL:[NSURL URLWithString:animatingModel.materialImageUrl]];
-        [view.vaseImageView2 setImageWithURL:[NSURL URLWithString:animatingModel.materialImageUrl]];
-        _buddhaViewScollView.scrollEnabled=YES;
-    }
+    BuddhaHallView * view = self.buddhaViewArray[_currentPage];
+    [view.teacupImageView1 setImage:[UIImage imageNamed:@"cup_has_tea"]];
     
 }
 
