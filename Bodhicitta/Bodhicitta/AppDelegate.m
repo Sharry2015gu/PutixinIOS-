@@ -9,6 +9,9 @@
 #import "AppDelegate.h"
 #import "UserLoginViewController.h"
 #import "HeaderFile.h"
+#import "UMSocial.h"
+#import "UMSocialWechatHandler.h"
+#import "UMSocialQQHandler.h"
 @interface AppDelegate ()
 {
     //表示早课时间开了没
@@ -68,8 +71,11 @@
     }
 }
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
-    
-     [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
+    //设置AppKey
+    [UMSocialData setAppKey:@"55fa2bf0e0f55ab2fa00615a"];
+    [UMSocialQQHandler setQQWithAppId:@"1104837457" appKey:@"ojVJclTXJhl94XTr" url:nil];
+    [UMSocialWechatHandler setWXAppId:@"wxbf54d96a6839dadc" appSecret:@"3349ed309f34b41340d8eeed5857842d" url:nil];
+    [[AVAudioSession sharedInstance] setCategory:AVAudioSessionCategoryPlayback error:nil];
     AFHTTPSessionManager * sessionManager = [AFHTTPSessionManager manager];
     self.sessionManager = sessionManager;
     sessionManager.responseSerializer = [AFHTTPResponseSerializer serializer];
